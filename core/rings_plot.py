@@ -1,11 +1,10 @@
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 from matplotlib.ticker import ScalarFormatter
 from scipy.signal import argrelextrema
 
-from .rings_calc import build_ring_graph, compute_ring_second_moment_matrix, D_of_a_N2, global_optimum_N2_piecewise, kvec_N3_from_ab, expected_dissipation_ring, meaningful_minima_N3, global_candidates_from_minima, build_weighted_ring_graph_from_kvec, kvec_N2_mu0_broken, k_symmetric
+from .rings_calc import build_ring_graph, compute_ring_second_moment_matrix, D_of_a_N2, global_optimum_N2_piecewise, kvec_N3_from_ab, expected_dissipation_ring, meaningful_minima_N3, global_candidates_from_minima, build_weighted_ring_graph_from_kvec
 from .corson_algorithm import random_minimum
 
 class ScalarFormatterOneDecimal(ScalarFormatter):
@@ -29,7 +28,7 @@ def minima_indices(y, include_endpoints=True):
 def mark_minima(ax, x, y, rtol=1e-10, s_circle=220, s_cross=140, lw=1.0):
     """Mark local and global minima of a 1D curve on an existing axis.
 
-    Local minima use the same yellow fill as the boundary minima drawn by
+    Local minima use the same white fill as the boundary minima drawn by
     plot_Figure3, so that the shared legend applies to every panel of the
     merged ring figure.
     """
@@ -51,10 +50,10 @@ def mark_minima(ax, x, y, rtol=1e-10, s_circle=220, s_cross=140, lw=1.0):
     # half by the spine, so they are drawn unclipped.
     # local (non-global): filled circle only
     if local_only:
-        ax.scatter(x[local_only], y[local_only], marker="o", s=s_circle, facecolors="yellow", edgecolors="black", linewidths=lw, zorder=20, clip_on=False)
+        ax.scatter(x[local_only], y[local_only], marker="o", s=s_circle, facecolors="white", edgecolors="black", linewidths=lw, zorder=20, clip_on=False)
 
     # global: x on top of a filled circle
-    ax.scatter(x[global_idx], y[global_idx], marker="o", s=s_circle, facecolors="yellow", edgecolors="black", linewidths=lw, zorder=22, clip_on=False)
+    ax.scatter(x[global_idx], y[global_idx], marker="o", s=s_circle, facecolors="white", edgecolors="black", linewidths=lw, zorder=22, clip_on=False)
     ax.scatter(x[global_idx], y[global_idx], marker="x", s=s_cross, c="black", linewidths=lw, zorder=23, clip_on=False)
 
 
@@ -63,8 +62,6 @@ def plot_dissipation_N2(gammas, mu=0.0, beta=0.1, kappa=1.0, ax=None, legend_ele
                         legend_ncol=1):
     """Plot the N=2 dissipation as a function of the reduced variable a for selected gamma values."""
     colors = ["#003366", "#E69F00"]
-    if ax is None:
-        fig, ax = plt.subplots()
 
     for i, gamma in enumerate(gammas):
         a_max = kappa * (2.0 ** (-1.0 / gamma))
@@ -97,8 +94,6 @@ def plot_fig2b_N2(gamma_vals, kappa=1.0, ax=None, lw_thick=4.0, lw_thin=2.0, leg
     is drawn thicker than the navy one so that both remain visible; this is a
     drawing device, not a difference in the underlying values.
     """
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(6, 3))
     k1 = []
     k3 = []
     for g in gamma_vals:
@@ -141,8 +136,6 @@ def plot_Figure3(gamma, mu, beta, kappa=1.0, grid=260, ax=None, cax=None,
     resolution: it must be large enough to reach 300 dpi at the final printed
     panel width (see figstyle for the physical sizes).
     """
-    if ax is None:
-        fig, ax = plt.subplots()
 
     # Create (a, b) parameter grid
     a_max = ((kappa**gamma)/2.0)**(1.0/gamma)
@@ -205,13 +198,11 @@ def plot_Figure3(gamma, mu, beta, kappa=1.0, grid=260, ax=None, cax=None,
     # Boundary minima: yellow filled circles with black edge
     if gamma < 1: # we analytically showed this
         for (a_b, b_b, D_b) in boundary_mins.values():
-            ax.scatter([a_b], [b_b], marker="o", s=s_circle, facecolors="yellow", edgecolors="black", linewidths=marker_lw, zorder=9, clip_on=False)
-
+            ax.scatter([a_b], [b_b], marker="o", s=s_circle, facecolors="white", edgecolors="black", linewidths=marker_lw, zorder=9, clip_on=False)
     # Interior minimum (if exists)
     if interior_min is not None:
         a_i, b_i, D_i = interior_min
-        ax.scatter([a_i], [b_i], marker="o", s=s_circle, facecolors="yellow", edgecolors="black", linewidths=marker_lw, zorder=10, clip_on=False)
-
+        ax.scatter([a_i], [b_i], marker="o", s=s_circle, facecolors="white", edgecolors="black", linewidths=marker_lw, zorder=10, clip_on=False)
     globals_ = global_candidates_from_minima(candidates, use_log=True, atol_log=5e-3)
 
     for tag, a_g, b_g, D_g in globals_:
@@ -282,8 +273,6 @@ def add_insets_to_Figure3(ax, gamma, kappa=1.0, node_size=180, edge_scale=5, lw_
 def plot_Figure4(ax=None, kappa=1.0, gamma_min=0.32, gamma_max=1.3, n=500,
                  lw=2.5, guide_lw=1.0, legend_fontsize=12, legend_loc="upper left"):
     """Plot the analytic N=3 branch diagram showing global and local minima versus gamma."""
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(6.2, 4.0))
 
     def k_sym_N3(gamma, kappa=1.0):
         return kappa * 6.0 ** (-1.0 / gamma)
@@ -347,19 +336,8 @@ def stretched_xlim(x1, x2, f1, f2):
     return xmin, xmin + span
 
 
-# === Figure 5 ===
-
-def save_phase_data(N, capacity_values, branch_labels, beta_values, gamma_values):
-    # imported here so that the ring figures do not require pandas
-    import pandas as pd
-
-    df_cap = pd.DataFrame(capacity_values, index=beta_values, columns=gamma_values)
-    df_cap.to_csv(f"capacity_values_N{N}.csv")
-    df_branch = pd.DataFrame(branch_labels, index=beta_values, columns=gamma_values)
-    df_branch.to_csv(f"branch_labels_N{N}.csv")
-
-def plot_capacity_values(capacity_values, N, beta_values, gamma_values, label=None, savefig=False,
-                         ax=None, cax=None, fontsize=None, label_above=False, N_label_xy=(0.62, 0.96)):
+def plot_capacity_values(capacity_values, N, beta_values, gamma_values,
+                         ax, cax=None, fontsize=None, label_above=False, N_label_xy=(0.62, 0.96)):
     """Plot the ring phase diagram using the minimum edge capacity as the displayed observable.
 
     Pass ax (and optionally cax) to draw into an existing figure, which is what
@@ -368,12 +346,7 @@ def plot_capacity_values(capacity_values, N, beta_values, gamma_values, label=No
     y-axis label. The panel letter is not drawn here: in a composed figure it is
     positioned in figure coordinates alongside all the others.
     """
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(12, 10))
-        if fontsize is None:
-            fontsize = 35
-    else:
-        fig = ax.get_figure()
+    fig = ax.get_figure()
 
     im = ax.imshow(capacity_values, aspect='auto', origin='lower', interpolation='nearest',
             extent=[gamma_values[0], gamma_values[-1], beta_values[0], beta_values[-1]], cmap='viridis')
@@ -401,8 +374,6 @@ def plot_capacity_values(capacity_values, N, beta_values, gamma_values, label=No
         cbar.ax.set_title(title, fontsize=fontsize, pad=3)
     else:
         cbar.set_label(cbar_label, fontsize=fontsize)
-        if cax is None:
-            offset.set_x(3)      # legacy nudge, only sensible on the standalone figure
 
     ax.set_xlabel(r'$\gamma$', fontsize=fontsize)
     ax.set_ylabel(r'$\beta$', fontsize=fontsize)
@@ -414,13 +385,7 @@ def plot_capacity_values(capacity_values, N, beta_values, gamma_values, label=No
         ax.text(N_label_xy[0], N_label_xy[1], rf'$N={N}$', transform=ax.transAxes,
                 fontsize=fontsize, color='white', ha='left', va='top')
 
-    if label is not None and cax is None:
-        ax.annotate(f'{label}', xy=(0.0, 0.93), xycoords='figure fraction', fontsize=fontsize, color='black', ha='left', va='top')
-    if savefig:
-        fig.savefig(f"capacity_phase_N{N}.pdf", bbox_inches="tight")
-
     return fig, ax
-
 
 def draw_ring_inset(G, ax, color="white", node_size=500, edge_scale=8, lw_scale=1.0, bg=None):
     """Draw a weighted 4-, 6-, or 8-node ring inset on an existing axis.
@@ -578,48 +543,14 @@ def add_network_inset(ax, G, beta, gamma, size=0.25, color="white", node_size=50
 
     return axins
 
-
-def plot_phase_with_insets(N, mu, gamma_values, beta_values, capacity_values, inset_params, label, save_final_fig=False):
-    """Plot the ring phase diagram and add representative optimized-network insets:
-    inset_params = list of tuples:
-        [(gamma1, beta1, color1),
-         (gamma2, beta2, color2),
-         (gamma3, beta3, color3)]
-    """
-
-    # Draw the main phase diagram
-    fig, ax = plot_capacity_values(capacity_values, N, beta_values, gamma_values, label, savefig=False)
-
-    # Create and place one optimized inset network for each requested parameter point
-    for gamma, beta, color in inset_params:
-        Gres, _, _ = build_optimized_ring_graph(N=N, beta=beta, gamma=gamma, mu=mu)
-        add_network_inset(ax, Gres, gamma=gamma, beta=beta, color=color)
-
-    if save_final_fig == True:
-        fig.savefig(f"capacity_phase_N{N}.pdf", bbox_inches="tight")
-
-    return fig, ax
-
-
-# === Figure 5 d, e
-
-def plot_curves_fixed_betas(fixed_beta, gamma_values, minK, branch_labels, label=None,
-                            ax=None, fontsize=None, lw=2.0, jump_lw=1.8, colors=None,
+def plot_curves_fixed_betas(fixed_beta, gamma_values, minK, branch_labels,
+                            ax, colors, fontsize=None, lw=2.0, jump_lw=1.8,
                             legend_loc='best', jump_positions=None, break_at_changes=True, break_positions=None):
     """Plot minimum capacities versus gamma for selected beta values, marking branch changes.
 
-    Pass ax to draw into an existing figure. colors overrides the default
-    viridis sampling, which for a single curve picks an arbitrary dark purple.
+    Pass ax to draw into an existing figure.
     """
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(12, 10))
-        if fontsize is None:
-            fontsize = 35
-    else:
-        fig = ax.get_figure()
-
-    if colors is None:
-        colors = plt.cm.viridis(np.linspace(0, 1, len(fixed_beta)))
+    fig = ax.get_figure()
 
     all_jump_positions = []
 
@@ -670,28 +601,16 @@ def plot_curves_fixed_betas(fixed_beta, gamma_values, minK, branch_labels, label
     ax.tick_params(axis='both', labelsize=fontsize)
     ax.legend(loc=legend_loc, fontsize=fontsize)
 
-    if label is not None:
-        plt.annotate(f'{label}', xy=(0.0, 0.93), xycoords='figure fraction', fontsize=fontsize, color='black', ha='left', va='top')
-
     return fig, ax, all_jump_positions
 
-
-def plot_curves_fixed_gammas(beta_values, fixed_gamma, minK, branch_labels, label=None,
-                             ax=None, fontsize=None, lw=2.0, jump_lw=2.0, colors=None,
+def plot_curves_fixed_gammas(beta_values, fixed_gamma, minK, branch_labels,
+                             ax, colors, fontsize=None, lw=2.0, jump_lw=2.0,
                              legend_loc='lower center', jump_positions=None, break_at_changes=True, break_positions=None):
     """Plot minimum capacities versus beta for selected gamma values, marking branch changes.
 
     Pass ax to draw into an existing figure.
     """
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(24, 10))
-        if fontsize is None:
-            fontsize = 35
-    else:
-        fig = ax.get_figure()
-
-    if colors is None:
-        colors = plt.cm.viridis(np.linspace(0, 1, len(fixed_gamma)))
+    fig = ax.get_figure()
 
     all_jump_positions = []
 
@@ -740,9 +659,6 @@ def plot_curves_fixed_gammas(beta_values, fixed_gamma, minK, branch_labels, labe
     ax.set_ylabel(r'$\min_e(k^*_e)$', fontsize=fontsize)
     ax.tick_params(axis='both', labelsize=fontsize)
     ax.legend(loc=legend_loc, fontsize=fontsize)
-
-    if label is not None:
-        plt.annotate(f'{label}', xy=(0.0, 0.93), xycoords='figure fraction', fontsize=fontsize, color='black', ha='left', va='top')
 
     return fig, ax
 

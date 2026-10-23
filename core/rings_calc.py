@@ -1,8 +1,7 @@
 import numpy as np
 import networkx as nx
-from scipy.optimize import minimize_scalar
+from scipy.optimize import minimize_scalar, brentq
 
-# === Figure 2 ===
 
 def kvec_N2_from_a(a, gamma, kappa=1.0):
     """Build the N=2 capacity vector [a, a, b, b] from the resource constraint."""
@@ -36,8 +35,6 @@ def global_optimum_N2_piecewise(gamma, kappa=1.0):
         a = 0.0
         b = kappa * (2.0 ** (-1.0 / gamma))
     return a, b
-
-# === Figure 3 ===
 
 def kvec_N3_from_ab(a, b, gamma, kappa=1.0):
     """Build the N=3 capacity vector [a, a, b, b, c, c] from the resource constraint."""
@@ -125,8 +122,6 @@ def global_candidates_from_minima(candidates, use_log=True, atol_log=5e-3, rtol=
         global_mask = np.abs(vals - vmin) <= tol
 
     return [c for c, m in zip(candidates, global_mask) if m]
-
-# === Figure 5 ===
 
 def compute_ring_second_moment_matrix(mu, beta, N):
     """Build the second-moment matrix of nodal injections for the ring model,
@@ -216,39 +211,11 @@ def expected_dissipation_ring(N, k_vec, Sigma):
     E = build_ring_incidence(N)
     return expected_dissipation_ring_from_incidence(E, k_vec, Sigma)
 
-'''
-def expected_dissipation_ring(N, k_vec, Sigma, tol=1e-10):
-    """Compute the expected dissipation of a ring network from its capacities and injection covariance:
-    <D> = <S^T L^+ S> = Tr(L^+ <S S^T>) with L = E K E^T.
-    """
-    k = np.asarray(k_vec, dtype=float).reshape(-1)
-
-    if np.any(k < 0):
-        raise ValueError("capacities must be >= 0")
-
-    Sigma = np.asarray(Sigma, dtype=float)
-
-    E = build_ring_incidence(N)
-    K = np.diag(k)
-    L = E @ K @ E.T
-    Lp = np.linalg.pinv(L)
-    D = np.trace(Lp @ Sigma) # <D> = Tr(L^+ <S S^T>)
-
-    return float(D)
-'''
-
 def k_symmetric(N, gamma, kappa=1.0):
     """Return the fully symmetric capacity vector for a 2N-edge ring."""
     m = 2 * N
     k0 = kappa * (m ** (-1.0 / gamma))
     return np.full(m, k0, dtype=float)
-
-def D_symmetric(N, gamma, mu, beta, kappa=1.0):
-    """Compute the dissipation of the fully symmetric ring state."""
-    E = build_ring_incidence(N)
-    Sigma = compute_ring_second_moment_matrix(mu, beta, N)
-    k = k_symmetric(N, gamma, kappa)
-    return expected_dissipation_ring_from_incidence(E, k, Sigma), k
 
 def kvec_N2_mu0_broken(gamma, kappa=1.0, which="left"):
     """Return a representative strongly symmetry-broken N=2, mu=0 capacity vector."""
@@ -259,50 +226,6 @@ def kvec_N2_mu0_broken(gamma, kappa=1.0, which="left"):
     else:
         # [0,0,x,x]
         return np.array([0.0, 0.0, x, x], dtype=float)
-
-'''
-def kvec_N2_mu0_symmetric(gamma, kappa=1.0):
-    """
-    Symmetric representative for N=2, mu=0.
-    Resource constraint: 4 k0^gamma = kappa^gamma
-    """
-    k0 = kappa * (4.0 ** (-1.0 / gamma))
-    return np.array([k0, k0, k0, k0], dtype=float)
-'''
-'''
-def compute_asymmetric_case(N, gamma, beta, mu, kappa=1.0, broken_edge=-1):
-    """Compute the strongly symmetry-broken path solution obtained by removing one ring edge."""
-
-    m = 2 * N
-    Sigma = compute_ring_second_moment_matrix(mu, beta, N)
-
-    # This closed-form path construction assumes that the removed edge is the closing edge
-    if broken_edge not in (-1, m - 1):
-        raise ValueError("This path formula assumes the broken edge is the closing edge (m-1).")
-
-    # On the path, the flow through edge e equals the cumulative injection on nodes 0,...,e
-    # Therefore <F_e^2> is the sum over the corresponding Sigma sub-block
-    F2_path = np.array([np.sum(Sigma[:e+1, :e+1]) for e in range(m - 1)], dtype=float)
-
-    # Clip tiny negative values caused by roundoff
-    if F2_path.min() < -1e-10:
-        raise ValueError(f"<F^2> became significantly negative: {F2_path.min()}")
-    F2_path = np.maximum(F2_path, 0.0)
-
-    # Corson update on the path edges, normalized to satisfy the resource constraint
-    numer = F2_path ** (1.0 / (1.0 + gamma))
-    denom = (np.sum(F2_path ** (gamma / (1.0 + gamma)))) ** (1.0 / gamma)
-    k_path = (numer / denom) * kappa
-
-    # Dissipation of the path solution
-    D_path = np.sum(np.divide(F2_path, k_path, out=np.zeros_like(F2_path), where=(k_path > 0)))
-
-    # Embed the path capacities back into the original ring edge list
-    K = np.zeros(m, dtype=float)
-    K[:m-1] = k_path
-    K[m-1] = 0.0
-
-    return float(D_path), K'''
 
 def compute_asymmetric_case_from_sigma(N, gamma, Sigma, kappa=1.0, broken_edge=-1):
     """Compute the strongly symmetry-broken path solution from a precomputed injection covariance matrix."""
@@ -337,53 +260,6 @@ def compute_asymmetric_case_from_sigma(N, gamma, Sigma, kappa=1.0, broken_edge=-
 
     return float(D_path), K
 
-'''
-def compute_asymmetric_case(N, gamma, beta, mu, kappa=1.0, broken_edge=-1):
-    """
-    Compute the strongly symmetry-broken path solution obtained by cutting one ring edge.
-
-    Symmetry-broken ring: cut one edge -> path.
-    Use KCL on the path: F_e = sum_{i=0}^e S_i (with orientation 0->1->...->m-1)
-    Then apply Corson update: k_e ~ <F_e^2>^{1/(1+gamma)}, normalized to sum k^gamma = kappa^gamma
-    Returns:
-      D (expected dissipation)
-      K (m x 1 capacities, with K[broken_edge]=0)
-    """
-    m = 2 * N
-    Sigma = compute_ring_second_moment_matrix(mu, beta, N)
-
-    # Choose which edge is removed; default is the "closing" edge (m-1 -> 0).
-    # For the KCL prefix formula below to hold without extra bookkeeping,
-    # we assume the remaining path edges are (0-1,1-2,...,m-2 - (m-1)).
-    # That corresponds to broken_edge being the closing edge.
-    if broken_edge not in (-1, m - 1):
-        raise ValueError("This closed-form path formula assumes the broken edge is the closing edge (m-1).")
-
-    # Edge e on the path separates nodes {0..e} from {e+1..m-1}.
-    # F_e = sum_{i=0}^e S_i  =>  <F_e^2> = sum_{i,j=0}^e <S_i S_j>
-    F2_path = np.array([np.sum(Sigma[:e+1, :e+1]) for e in range(m - 1)], dtype=float)
-
-    # Numerical safety: due to rounding, tiny negatives can occur
-    if F2_path.min() < -1e-10:
-        raise ValueError(f"<F^2> became significantly negative: {F2_path.min()}")
-    F2_path = np.maximum(F2_path, 0.0)
-
-    # Corson optimal capacities on the path (only for the m-1 remaining edges)
-    # k_e = [F2_e^(1/(1+g))] / [ (sum F2^(g/(1+g)))^(1/g) ] * kappa
-    numer = F2_path ** (1.0 / (1.0 + gamma))
-    denom = (np.sum(F2_path ** (gamma / (1.0 + gamma)))) ** (1.0 / gamma)
-    k_path = (numer / denom) * kappa  # sum k_path^gamma = kappa^gamma
-
-    # Expected dissipation on the path: sum_e <F_e^2>/k_e
-    D_path = np.sum(np.divide(F2_path, k_path, out=np.zeros_like(F2_path), where=(k_path > 0)))
-
-    # Embed back into ring edge list with one broken edge set to zero
-    K = np.zeros(m, dtype=float)
-    K[:m-1] = k_path
-    K[m-1] = 0.0
-    return float(D_path), K.reshape(-1, 1)
-'''
-
 def kb_from_constraint_2branch(ka, gamma, N, kappa=1.0):
     """Compute the second branch capacity from the two-value resource constraint."""
     rhs = (kappa**gamma) / N - ka**gamma
@@ -391,16 +267,6 @@ def kb_from_constraint_2branch(ka, gamma, N, kappa=1.0):
         return np.nan
     return rhs**(1.0 / gamma)
 
-def D_alternating(N, gamma, mu, beta, ka, kappa=1.0):
-    """Compute the dissipation and capacities of the alternating weakly broken branch."""
-    kb = kb_from_constraint_2branch(ka, gamma, N, kappa)
-    if not np.isfinite(kb) or kb <= 0 or ka <= 0:
-        return np.inf, np.array([])
-
-    D = (mu**2 * N / (ka + kb) + beta**2 * N * (N**2 - 1) / 12.0 * (ka + kb) / (ka * kb))
-
-    k = np.array([ka if i % 2 == 0 else kb for i in range(2 * N)], dtype=float)
-    return float(D), k
 
 def D_alternating_scalar(ka, N, gamma, mu, beta, kappa=1.0):
     """Return the alternating-branch dissipation as a scalar function of ka."""
@@ -447,50 +313,58 @@ def find_best_block_N2(gamma, mu, beta, kappa=1.0):
 
     return float(res.fun), k
 
-def D_block_N2(gamma, mu, beta, ka, kappa=1.0):
-    """Compute the dissipation and capacities of the N=2 block branch [ka, ka, kb, kb]."""
-    N = 2
-    kb = kb_from_constraint_2branch(ka, gamma, N, kappa)
-    if not np.isfinite(kb) or kb <= 0 or ka <= 0:
-        return np.inf, np.array([])
+# === Strong symmetry breaking transition in rings ===
+def _F2_open_ring(N, mu, beta):
+    """<F_e^2> on the 2N-1 edges of the open ring, from KCL on the path.
 
-    D = mu**2 * (ka + kb) / (2.0 * ka * kb) + 2.0 * beta**2 / (ka + kb)
-    k = np.array([ka, ka, kb, kb], dtype=float)
-    return float(D), k
+    Edge e (0-indexed) carries the cumulative injection of nodes 0..e, which
+    contain n_g sources and n_c sinks (sources at even node indices).
+    """
+    e = np.arange(2 * N - 1)
+    n_g = (e + 2) // 2
+    n_c = (e + 1) // 2
+    return mu**2 * (n_g - n_c)**2 + n_g * (N - n_g) * beta**2
 
-'''
-def find_best_alternating(N, gamma, mu, beta, kappa=1.0, n_grid=2000):
-    ka_max = (kappa**gamma / N)**(1.0 / gamma)
+
+def _lnD_sym_minus_lnD_open(gamma, N, mu, beta):
+    """ln D_sym - ln D_open from the closed forms (SI Eqs. 65 and 67), kappa = 1."""
+    gamma = np.asarray(gamma, dtype=float)
+    p = np.atleast_1d(gamma / (1.0 + gamma))
+    lnD_sym = np.log(2 * N) / gamma + np.log(N * mu**2 / 2 + N * (N**2 - 1) * beta**2 / 6)
+    F2 = _F2_open_ring(N, mu, beta)
+    lnD_open = np.log(np.sum(F2[:, None] ** p[None, :], axis=0)) / p
+    return lnD_sym - (lnD_open if gamma.ndim else lnD_open[0])
+
+
+def gamma_crossing_closed_form(N, mu, beta, gamma_grid=np.linspace(0.02, 0.999, 400)):
+    """Smallest gamma at which the symmetric and open ring have equal dissipation."""
+    v = _lnD_sym_minus_lnD_open(gamma_grid, N, mu, beta)
+    idx = np.where(np.sign(v[:-1]) * np.sign(v[1:]) < 0)[0]
+    if len(idx) == 0:
+        return np.nan
+    i = idx[0]
+    return brentq(_lnD_sym_minus_lnD_open, gamma_grid[i], gamma_grid[i + 1],
+                  args=(N, mu, beta), xtol=1e-14)
+
+
+def gamma_c_vs_N_closed_form(N_values, mu, beta_bounds=(0.05, 3.0), n_beta=300):
+    """gamma_c(N) as the minimum over beta of the sym/open crossing (SI Methods 7).
+
+    A coarse beta scan brackets the minimum, which is then refined with a
+    bounded scalar minimisation. Returns gamma_c and the minimising beta.
+    """
+    gamma_c, beta_c = [], []
+    for N in N_values:
+        betas = np.linspace(*beta_bounds, n_beta)
+        gc = np.array([gamma_crossing_closed_form(N, mu, b) for b in betas])
+        j = np.nanargmin(gc)
+        res = minimize_scalar(lambda b: gamma_crossing_closed_form(N, mu, b),
+                              bounds=(betas[max(j - 1, 0)], betas[min(j + 1, n_beta - 1)]),
+                              method="bounded", options={"xatol": 1e-12})
+        gamma_c.append(res.fun)
+        beta_c.append(res.x)
+    return np.array(gamma_c), np.array(beta_c)
     
-    ka_vals = np.linspace(1e-8, ka_max - 1e-8, n_grid) # prevent division by zero
-
-    best_D = np.inf
-    best_k = None
-
-    for ka in ka_vals:
-        D, k = D_alternating(N, gamma, mu, beta, ka, kappa)
-        if D < best_D:
-            best_D = D
-            best_k = k
-
-    return best_D, best_k
-
-def find_best_block_N2(gamma, mu, beta, kappa=1.0, n_grid=2000):
-    ka_max = (kappa**gamma / 2.0)**(1.0 / gamma)
-    ka_vals = np.linspace(1e-8, ka_max - 1e-8, n_grid)
-
-    best_D = np.inf
-    best_k = None
-
-    for ka in ka_vals:
-        D, k = D_block_N2(gamma, mu, beta, ka, kappa)
-        if D < best_D:
-            best_D = D
-            best_k = k
-
-    return best_D, best_k
-'''
-
 def get_capacities_all_branches(N, mu, beta_values, gamma_values, kappa=1.0, verbose = True):
     """Compare all candidate branches across parameter space and record the optimal one."""
 
@@ -539,158 +413,6 @@ def get_capacities_all_branches(N, mu, beta_values, gamma_values, kappa=1.0, ver
             branch_labels[i][j] = label
 
     return capacity_values, branch_labels
-
-
-# === Figure 6b ===
-
-def find_gamma_crossing(gamma_vals, D_sym, D_brk):
-    """Locate the first crossing point between the symmetric and broken dissipation curves."""
-    delta = np.asarray(D_sym) - np.asarray(D_brk)
-    s = np.sign(delta)
-
-    idx = np.where(s[:-1] * s[1:] < 0)[0]
-    if len(idx) == 0:
-        return None
-
-    i = idx[0]
-    g0, g1 = gamma_vals[i], gamma_vals[i+1]
-    d0, d1 = delta[i], delta[i+1]
-    # linear interpolation
-    return g0 - d0 * (g1 - g0) / (d1 - d0)
-
-def Ds_Da_for_fixed_beta(N, mu, beta, gamma_grid, kappa=1.0):
-    """Compute the symmetric and strongly broken dissipation branches for one fixed beta."""
-    Sigma = compute_ring_second_moment_matrix(mu, beta, N)
-    E = build_ring_incidence(N)
-
-    D_sym = np.empty_like(gamma_grid, dtype=float)
-    D_brk = np.empty_like(gamma_grid, dtype=float)
-
-    for j, gamma in enumerate(gamma_grid):
-        k_sym = k_symmetric(N, gamma, kappa=kappa)
-        D_sym[j] = expected_dissipation_ring_from_incidence(E, k_sym, Sigma)
-
-        D_brk[j], _k_brk = compute_asymmetric_case_from_sigma(N, gamma, Sigma, kappa=kappa, broken_edge=-1)
-
-    return D_sym, D_brk
-
-def gamma_c_vs_N(N_values, mu, gamma_approx, cusp_betas_approx, width_fraction=0.05, kappa=1.0):
-    """Estimate the critical exponent gamma_c as a function of system size."""
-
-    gamma_c_list = []
-
-    for idxN, N in enumerate(N_values):
-        g0 = gamma_approx[idxN]
-        beta0 = cusp_betas_approx[idxN]
-
-        # Use a wider search window and finer resolution for larger N
-        if N > 7:
-            width_here = 0.15
-            n_gamma = 4500
-            beta_span = (0.8, 1.2)
-            n_beta_coarse = 300
-            n_beta_fine = 1200
-        else:
-            width_here = width_fraction
-            n_gamma = 1500
-            beta_span = (0.95, 1.05)
-            n_beta_coarse = 200
-            n_beta_fine = 800
-
-        # Gamma grid centered around the approximate cusp value
-        half_width = g0 * width_here
-        g_min = g0 - half_width
-        g_max = g0 + half_width
-        gamma_grid = np.linspace(g_min, g_max, n_gamma)
-
-        # First do a coarse beta scan around the approximate cusp beta
-        beta_grid_coarse = np.linspace(beta0 * beta_span[0], beta0 * beta_span[1], n_beta_coarse)
-        gamma_crossings_coarse = np.full(n_beta_coarse, np.nan, dtype=float)
-
-        print(
-            f"Calculating N={N} on gamma in [{g_min:.4g},{g_max:.4g}] "
-            f"beta in [{beta_grid_coarse[0]:.4g},{beta_grid_coarse[-1]:.4g}]"
-        )
-
-        for ib, beta in enumerate(beta_grid_coarse):
-            D_sym, D_brk = Ds_Da_for_fixed_beta(N, mu, beta, gamma_grid, kappa=kappa)
-            gc = find_gamma_crossing(gamma_grid, D_sym, D_brk)
-            if gc is not None:
-                gamma_crossings_coarse[ib] = gc
-
-        # Find the beta region where gamma_c is smallest
-        valid = np.isfinite(gamma_crossings_coarse)
-        if not np.any(valid):
-            gamma_c_list.append(np.nan)
-            continue
-
-        ib_best = np.nanargmin(gamma_crossings_coarse)
-
-        # Refine beta only locally around the best coarse point
-        ib_left = max(0, ib_best - 1)
-        ib_right = min(n_beta_coarse - 1, ib_best + 1)
-        beta_left = beta_grid_coarse[ib_left]
-        beta_right = beta_grid_coarse[ib_right]
-
-        beta_grid_fine = np.linspace(beta_left, beta_right, n_beta_fine)
-        gamma_crossings_fine = np.full(n_beta_fine, np.nan, dtype=float)
-
-        for ib, beta in enumerate(beta_grid_fine):
-            D_sym, D_brk = Ds_Da_for_fixed_beta(N, mu, beta, gamma_grid, kappa=kappa)
-            gc = find_gamma_crossing(gamma_grid, D_sym, D_brk)
-            if gc is not None:
-                gamma_crossings_fine[ib] = gc
-
-        gamma_c_list.append(np.nanmin(gamma_crossings_fine))
-
-    return np.array(gamma_c_list)
-
-'''
-def gamma_c_vs_N(N_values, mu, gamma_approx, cusp_betas_approx, width_fraction=0.05, kappa=1.0):
-    """Estimate the critical exponent gamma_c as a function of system size."""
-
-    gamma_c_list = []
-
-    for idxN, N in enumerate(N_values):
-        g0 = gamma_approx[idxN]
-        beta0 = cusp_betas_approx[idxN]
-        n_gamma = 1500
-
-        if N > 7:
-            width_fraction = 0.15
-            n_gamma = 4500
-
-        # gamma grid centered around approximate value
-        half_width = g0 * width_fraction
-        g_min = g0 - half_width
-        g_max = g0 + half_width
-
-        gamma_grid = np.linspace(g_min, g_max, n_gamma)
-
-        # beta grid around approximate cusp beta
-        n_beta = 1500
-        beta_span=(0.95, 1.05)
-        if N > 7:
-            beta_span = (0.8, 1.2)
-            n_beta = 4500
-        beta_grid = np.linspace(beta0 * beta_span[0], beta0 * beta_span[1], n_beta)
-
-        gamma_crossings = np.full(n_beta, np.nan, dtype=float)
-
-        print(f"Calculating N={N} on gamma in [{g_min:.4g},{g_max:.4g}] beta in [{beta_grid[0]:.4g},{beta_grid[-1]:.4g}]")
-
-        for ib, beta in enumerate(beta_grid):
-            D_sym, D_brk = Ds_Da_for_fixed_beta(N, mu, beta, gamma_grid, kappa=kappa)
-            gc = find_gamma_crossing(gamma_grid, D_sym, D_brk)
-            if gc is not None:
-                gamma_crossings[ib] = gc
-
-        gamma_c_list.append(np.nanmin(gamma_crossings))
-
-    return np.array(gamma_c_list)
-'''
-
-# === Figure 10 (supplement) ===
 
 def k0_from_gamma(gamma, kappa=1.0):
     """Return the unperturbed broken-branch capacity scale used in the epsilon expansion."""
