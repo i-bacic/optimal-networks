@@ -266,7 +266,7 @@ OUTPUT: phase diagram (Fig. 6d)
 2. Draw both networks with sources and sinks marked
 ```
 
-### 10.2 `rings.ipynb` (Figs. 2, 3; Supplementary Fig. 1)
+### 10.2 `rings.ipynb` (Figs. 2, 3; Supplementary Fig. 2)
 
 ```text
 1. N = 2, mu = 0: analytic optimum as a function of gamma
@@ -309,7 +309,7 @@ OUTPUT: phase diagram (Fig. 6d)
 4. Plot the time series and the phase diagram
 ```
 
-### 10.6 `multilayer.ipynb` (Supplementary Note 4)
+### 10.6 `multilayer.ipynb` (Supplementary Figure 1 in Supplementary Note 4)
 
 ```text
 1. Build two 5 x 5 lattices with interlayer edges and four sources; symmetry group D_2d
