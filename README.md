@@ -25,7 +25,7 @@ We study optimal supply networks whose edge capacities minimize the average diss
 ├── scan_data/              precomputed parameter scans (.npz) for the cube, K_{4,4} and multilayer networks
 ├── energy_data/            hourly wind and PV capacity factors from renewables.ninja (Jülich, 2019)
 ├── intro_figure.ipynb      Fig. 1
-├── rings.ipynb             Figs. 2 and 3, Supplementary Fig. 1
+├── rings.ipynb             Figs. 2 and 3, Supplementary Fig. 2
 ├── cube.ipynb              Fig. 4
 ├── bipartite.ipynb         Fig. 5 and the data for Supplementary Table 10
 ├── energy_grids.ipynb      Fig. 6
