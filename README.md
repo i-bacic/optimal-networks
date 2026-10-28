@@ -32,6 +32,8 @@ We study optimal supply networks whose edge capacities minimize the average diss
 └── multilayer.ipynb        extended multilayer network (Supplementary Note 4)
 ```
 
+A description of the algorithms, with pseudocode, is given in ALGORITHM.md.
+
 ## System requirements
 
 The code is written in Python and runs on a standard desktop or laptop computer. No non-standard hardware is required. It has been tested on Windows 11 with Python 3.10.14 and the following package versions:
@@ -66,11 +68,11 @@ Open the notebooks in any Jupyter front end, e.g. VS Code with the Jupyter exten
 | Notebook | Paper content | Typical run time |
 |----------|---------------|------------------|
 | `intro_figure.ipynb` | Fig. 1 | < 1 min |
-| `rings.ipynb` | Figs. 2, 3; Supplementary Fig. 1 | 10 min |
+| `rings.ipynb` | Figs. 2, 3; Supplementary Fig. 2 | 10 min |
 | `cube.ipynb` | Fig. 4 | 5 min with cached scans, 5 h from scratch |
 | `bipartite.ipynb` | Fig. 5; Supplementary Table 10 | 5 min with cached scans, 2 h from scratch |
 | `energy_grids.ipynb` | Fig. 6 | 15 min  | 
-| `multilayer.ipynb` | Supplementary Note 4 | 5 min with cached scans, 57 h from scratch on 11 worker processes |
+| `multilayer.ipynb` | Supplementary Fig. 1 | 5 min with cached scans, 57 h from scratch on 11 worker processes |
 
 Run times were measured on a 13th Gen Intel Core i7-1365U (1.80 GHz, 10 cores, 12 logical processors) with 32 GB RAM. Each notebook writes its figure as a PDF to the repository root.
 
