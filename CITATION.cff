@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it using the metadata
+  from this file. A reference to the associated paper will be
+  added once it is published.
+type: software
+title: >-
+  optimal-networks: code for "Symmetry breaking in minimum
+  dissipation networks"
+authors:
+  - given-names: Aarathi
+    family-names: Parameswaran
+    affiliation: "Institute of Climate and Energy Systems: Energy Systems Engineering (ICE-1), Forschungszentrum Jülich, Jülich, Germany; Bonn-Cologne Graduate School of Physics and Astronomy, University of Bonn, Bonn, Germany; Center for Complex Networks and Systems Research, Luddy School of Informatics, Computing, and Engineering, Indiana University, Bloomington, IN, USA"
+    orcid: "https://orcid.org/0009-0005-8255-2152"
+  - given-names: Pezhman
+    family-names: Ebrahimzadeh
+    affiliation: "Neuromorphic Compute Nodes (PGI-14), Forschungszentrum Jülich, Jülich, Germany"
+    orcid: "https://orcid.org/0000-0002-9919-3900"
+  - given-names: Andrea
+    family-names: Benigni
+    affiliation: "Institute of Climate and Energy Systems: Energy Systems Engineering (ICE-1), Forschungszentrum Jülich, Jülich, Germany; RWTH Aachen University, Aachen, Germany"
+    orcid: "https://orcid.org/0000-0002-2475-7003"
+  - given-names: Dirk
+    family-names: Witthaut
+    affiliation: "Institute of Climate and Energy Systems: Energy Systems Engineering (ICE-1), Forschungszentrum Jülich, Jülich, Germany; Institute for Theoretical Physics, University of Cologne, Köln, Germany"
+    orcid: "https://orcid.org/0000-0002-3623-5341"
+  - given-names: Iva
+    family-names: Bačić
+    affiliation: "Institute of Climate and Energy Systems: Energy Systems Engineering (ICE-1), Forschungszentrum Jülich, Jülich, Germany; Center of Excellence for Study of Complex Systems, Institute of Physics Belgrade, University of Belgrade, Belgrade, Serbia"
+    orcid: "https://orcid.org/0000-0003-2987-5065"
+repository-code: "https://github.com/i-bacic/optimal-networks"
+abstract: >-
+  Code and data to reproduce the numerical results of the
+  manuscript "Symmetry breaking in minimum dissipation networks".
+  The code computes locally optimal supply networks that minimize
+  the average dissipation of linear flows under a global resource
+  constraint and fluctuating injections, scans the parameter
+  space, and classifies the optima as symmetric, weakly
+  symmetry-broken or strongly symmetry-broken.
+keywords:
+  - optimal transport networks
+  - symmetry breaking
+  - supply networks
+  - power grids
+  - network science
+license: MIT
+version: 1.0.0
