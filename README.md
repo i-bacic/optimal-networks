@@ -1,6 +1,8 @@
 # Symmetry breaking in minimum dissipation networks
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23729507.svg)](https://doi.org/10.5281/zenodo.23729507)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)
 
 Code and data accompanying the publication
 
