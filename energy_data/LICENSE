@@ -1,0 +1,16 @@
+The data files in this folder are third-party data from renewables.ninja
+(https://www.renewables.ninja), hourly wind and solar PV capacity factors for
+Jülich, Germany, for the year 2019. They are redistributed unmodified under the
+Creative Commons Attribution-NonCommercial 4.0 International License
+(CC BY-NC 4.0, https://creativecommons.org/licenses/by-nc/4.0/). They are NOT
+covered by the MIT License of the rest of this repository.
+
+If you use these data, please cite:
+
+S. Pfenninger and I. Staffell (2016). Long-term patterns of European PV output
+using 30 years of validated hourly reanalysis and satellite data.
+Energy 114, 1251-1265. doi:10.1016/j.energy.2016.08.060
+
+I. Staffell and S. Pfenninger (2016). Using bias-corrected reanalysis to
+simulate current and future wind power output.
+Energy 114, 1224-1239. doi:10.1016/j.energy.2016.08.068
