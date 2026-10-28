@@ -1,5 +1,6 @@
 # Symmetry breaking in minimum dissipation networks
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23729507.svg)](https://doi.org/10.5281/zenodo.23729507)
 
 Code and data accompanying the publication
 
@@ -99,7 +100,7 @@ renewables.ninja and are licensed under CC BY-NC 4.0
 
 ## Citation
 
-If you use this code, please cite the associated paper:
+If you use this code, please cite the associated paper and code:
 
 ```bibtex
 @unpublished{parameswaran2026symmetry,
@@ -107,6 +108,15 @@ If you use this code, please cite the associated paper:
   title  = {Symmetry breaking in minimum dissipation networks},
   note   = {Manuscript under review},
   year   = {2026}
+}
+
+@software{parameswaran2026code,
+  author    = {Parameswaran, Aarathi and Ebrahimzadeh, Pezhman and Benigni, Andrea and Witthaut, Dirk and Ba{\v{c}}i{\'c}, Iva},
+  title     = {optimal-networks: code for ``Symmetry breaking in minimum dissipation networks''},
+  year      = {2026},
+  publisher = {Zenodo},
+  version   = {v1.0.0},
+  doi       = {10.5281/zenodo.23729507}
 }
 ```
 
